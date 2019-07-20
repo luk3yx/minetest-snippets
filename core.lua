@@ -15,7 +15,7 @@ local safe_funcs = {}
 local orig_funcs, running_snippet
 
 function snippets.get_current_snippet()
-    if running_snippet then return copy(running_snippet) end
+    return running_snippet
 end
 
 -- Apply "safe functions": These wrap normal registration functions so that
@@ -188,8 +188,13 @@ function snippets.register_snippet(name, def)
     def.name = name
 
     if def.code then
+        -- Automatically add "return"
         local msg
-        def.func, msg = loadstring(def.code, name)
+        def.func = loadstring('return ' .. def.code, name)
+        if not def.func then
+            def.func, msg = loadstring(def.code, name)
+        end
+
         if def.func then
             if name ~= 'snippets:anonymous' then
                 local old_def = snippets.registered_snippets[name]

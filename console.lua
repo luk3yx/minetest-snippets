@@ -197,8 +197,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         console_text[name] = {}
         snippets.show_console(name)
         if not code or code == '' then return end
-        local good, msg = loadstring('return ' .. code)
-        if good then code = 'return ' .. code end
         local res = snippets.exec_as_player(name, code)
         if res ~= nil then
             snippets.push_console_msg(name, res)
