@@ -13,6 +13,9 @@ dofile(modpath .. '/core.lua')
 -- Load persistence
 loadfile(modpath .. '/persistence.lua')(minetest.get_mod_storage())
 
+-- Load the Form object
+dofile(modpath .. '/forms.lua')
+
 -- Load the "console"
 dofile(modpath .. '/console.lua')
 

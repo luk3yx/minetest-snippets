@@ -149,6 +149,12 @@ local function wrap(snippet, func)
     return function(...) return wrap_raw(snippet, func, ...) end
 end
 
+-- Expose the above function to the API.
+-- This will only wrap functions if called from inside a snippet.
+function snippets.wrap_callback(func)
+    return wrap(running_snippet, func)
+end
+
 do
     local after_ = minetest.after
     function safe_funcs.after(after, func, ...)
