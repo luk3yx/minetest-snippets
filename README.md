@@ -29,6 +29,37 @@ More documentation coming soon.
     inside an "anonymous snippet" owned by the player.
  - `snippets.exec(code)`: Executes `code` inside a generic snippet.
  - `snippets.run(name, ...)`: Executes a snippet.
+ - `snippets.Form(player_or_name)`: Creates a form.
+
+### Forms
+
+`snippets.Form`s can display and handle formspecs, and are recommended inside
+snippets over `minetest.show_formspec`, as they do not create semi-permanent
+global handlers. There is currently no way to set the `formname`, it is
+automatically chosen/generated and is used internally.
+
+Form methods:
+
+ - `form:show()` / `form:open()`: Displays the form.
+ - `form:hide()` / `form:close()`: Closes the form.
+ - `form:set_prepend(formspec)`: Sets text to prepend to the formspec. This has
+    nothing to do with global formspec prepends.
+ - `form:set_formspec(formspec)`: Sets the formspec text. This does not modify
+    prepended text or appended text. Any change to this (or the prepend/append
+    values) is displayed immediately to the client.
+ - `form:set_append(formspec)`: Sets text to append to the formspec before
+    displaying it.
+ - `form:get_prepend`, `form:get_formspec`, `form:get_append`
+ - `form:add_callback(function(form, fields))`: This creates a callback which
+    is called whenever form data is received from the client.
+ - `form:add_callback(name, function(form, fields))`: Similar to the above,
+    however is only called if `fields` contains `name` (a string).
+ - `form.context`: Private data stored with this `form` object. Not sent to
+    clients.
+ - `form.pname`: The player name associated with this form.
+
+*When a form is deleted (`form=nil`) and it is not open by the client, garbage
+collection will allow the internal `formname` to be reused.*
 
 ## Example snippets
 

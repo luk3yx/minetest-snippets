@@ -49,13 +49,10 @@ function minetest.show_formspec(pname, ...)
 end
 
 -- Show formspecs
-local print = print
 function Form:show()
     local data = get(self)
     if not get_player_by_name(data.victim) then return false end
     open_formspecs[data.victim] = self
-    print('show_formspec', data.victim, data.formname,
-        data.prepend .. data.formspec .. data.append)
     show_formspec(data.victim, data.formname,
         data.prepend .. data.formspec .. data.append)
     return true
