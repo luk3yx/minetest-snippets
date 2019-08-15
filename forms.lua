@@ -63,7 +63,7 @@ Form.open = Form.show
 function Form:close()
     local data = get(self)
     if open_formspecs[data.victim] == self then
-        minetest.close_formspec(data.victim, data.name)
+        minetest.close_formspec(data.victim, data.formname)
         open_formspecs[data.victim] = nil
     end
 end
