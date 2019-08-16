@@ -43,9 +43,11 @@ end
 
 -- Override minetest.show_formspec
 local show_formspec = minetest.show_formspec
-function minetest.show_formspec(pname, ...)
-    if pname then open_formspecs[pname] = nil end
-    return show_formspec(pname, ...)
+function minetest.show_formspec(pname, formname, formspec)
+    if pname and (formspec ~= '' or formname == '') then
+        open_formspecs[pname] = nil
+    end
+    return show_formspec(pname, formname, formspec)
 end
 
 -- Show formspecs
