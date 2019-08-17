@@ -2,42 +2,45 @@
 -- Snippet console - Allows players to create and edit persistent snippets
 --
 
-local snippet_list = {}
-local selected_snippet = {}
-local console_code = {}
-local console_text = {}
+local forms = {}
 
 minetest.register_on_leaveplayer(function(player)
-    local name = player:get_player_name()
-    if snippet_list[name] then
-        snippet_list[name] = nil
-        selected_snippet[name] = nil
-        console_code[name] = nil
-        console_text[name] = nil
-    end
+    forms[player:get_player_name()] = nil
 end)
 
-function snippets.show_console(name)
+local callback
+function snippets.update_console(name)
+    if not minetest.check_player_privs(name, 'server') then return end
+
+    if not forms[name] then
+        forms[name] = snippets.Form(name)
+        forms[name]:add_callback(callback)
+        forms[name].context.code = ''
+    end
+    local form = forms[name]
+    if not form:is_open() then form.context.text = nil end
+
     local formspec = 'size[14,10]' ..
         'label[0,0;My snippets]' ..
         'textlist[0,0.5;3.5,7.4;snippetlist;#aaaaaaNew snippet'
 
-    snippet_list[name] = {}
+    local snippet_list = {}
+    form.context.snippet_list = snippet_list
     for k, v in pairs(snippets.registered_snippets) do
         if v.persistent then
-            table.insert(snippet_list[name], k)
+            table.insert(snippet_list, k)
         end
     end
-    table.sort(snippet_list[name])
+    table.sort(snippet_list)
 
-    local selected = 0
-    local unsaved = false
-    for id, snippet in ipairs(snippet_list[name]) do
+    local selected, unaved = 0, false
+    local selected_snippet = form.context.selected_snippet
+    for id, snippet in ipairs(snippet_list) do
         formspec = formspec .. ',##' .. minetest.formspec_escape(snippet)
-        if snippet == selected_snippet[name] then
+        if snippet == selected_snippet then
             selected = id
             local def = snippets.registered_snippets[snippet]
-            if (def and def.code or '') ~= console_code[name] then
+            if (def and def.code or '') ~= form.context.code then
                 formspec = formspec .. ' (unsaved)'
             end
         end
@@ -50,13 +53,14 @@ function snippets.show_console(name)
 
     formspec = formspec ..
         'textlist[3.9,6.01;10,4.04;ignore;'
-    if console_text[name] then
-        if #console_text[name] > 0 then
-            for id, msg in ipairs(console_text[name]) do
+    if form.context.text then
+        local console_text = form.context.text
+        if #console_text > 0 then
+            for id, msg in ipairs(console_text) do
                 if id > 1 then formspec = formspec .. ',' end
                 formspec = formspec .. minetest.formspec_escape(msg)
             end
-            formspec = formspec .. ',;' .. (#console_text[name] + 1)
+            formspec = formspec .. ',;' .. (#console_text + 1)
         else
             formspec = formspec .. ';1'
         end
@@ -68,32 +72,38 @@ function snippets.show_console(name)
             'button[3.9,5.14;10.21,0.81;run;Run]'
     end
 
-    if not console_code[name] then console_code[name] = '' end
-    local code = minetest.formspec_escape(console_code[name])
-    if code == '' and console_text[name] then code = '(no code)' end
+    if not form.context.code then form.context.code = '' end
+    local code = minetest.formspec_escape(form.context.code)
+    if code == '' and form.context.text then code = '(no code)' end
 
     local snippet, owner
-    if selected_snippet[name] then
-        snippet = minetest.colorize('#aaa', selected_snippet[name])
+    if selected_snippet then
+        snippet = minetest.colorize('#aaa', selected_snippet)
     else
         snippet = minetest.colorize('#888', 'New snippet')
     end
 
-    local def = snippets.registered_snippets[selected_snippet[name]]
+    local def = snippets.registered_snippets[selected_snippet]
     if def and def.owner then
         owner = minetest.colorize('#aaa', def.owner)
-    elseif selected_snippet[name] then
+    elseif selected_snippet then
         owner = minetest.colorize('#888', 'none')
     else
         owner = minetest.colorize('#aaa', name)
     end
 
     formspec = formspec .. ']textarea[4.2,0.4;10.2,5.31;' ..
-        (console_text[name] and '' or 'code') .. ';Snippet: ' ..
+        (form.context.text and '' or 'code') .. ';Snippet: ' ..
         minetest.formspec_escape(snippet .. ', owner: ' .. owner) .. ';' ..
         code .. ']'
 
-    minetest.show_formspec(name, 'snippets:console', formspec)
+    form:set_formspec(formspec)
+end
+
+function snippets.show_console(name)
+    snippets.update_console(name)
+    local form = forms[name]
+    if form then form:show() end
 end
 
 function snippets.push_console_msg(name, msg, col)
@@ -101,15 +111,20 @@ function snippets.push_console_msg(name, msg, col)
         col = '##'
     end
 
-    if console_text[name] then
-        table.insert(console_text[name], col .. tostring(msg))
-        snippets.show_console(name)
+    local text = forms[name] and forms[name].context.text
+    if text then
+        table.insert(text, col .. tostring(msg))
+        snippets.update_console(name)
     end
 end
 
 snippets.register_on_log(function(snippet, level, msg)
     local owner = snippets.registered_snippets[snippet].owner
-    if not owner or not console_text[owner] then return end
+    local form = forms[owner]
+    if not owner or not form or not form.context.text or
+            not form:is_open() then
+        return
+    end
     if level ~= 'none' then
         msg = level:sub(1, 1):upper() .. level:sub(2) .. ': ' .. msg
     end
@@ -140,61 +155,57 @@ minetest.register_chatcommand('snippets', {
     end,
 })
 
-minetest.register_on_player_receive_fields(function(player, formname, fields)
-    if formname ~= 'snippets:console' and
-            formname ~= 'snippets:console_save_as' then
-        return
-    end
-    local name = player:get_player_name()
+local function saveform_callback(saveform, fields)
+    local name = saveform.pname
+    local form = forms[name]
+    saveform:close()
 
     -- Sanity check
-    if not minetest.check_player_privs(name, 'server') then
-        if console_text[name] then
-            console_text[name] = nil
-            minetest.close_formspec(name, 'snippets:console')
-        elseif not fields.quit then
-            minetest.kick_player(name,
-                'You appear to be using a "hacked" client.')
-        end
-        return
-    elseif not console_code[name] then
+    if not minetest.check_player_privs(name, 'server') or not form then
+        forms[name] = nil
         return
     end
 
-    -- Handle "Save as"
-    if formname == 'snippets:console_save_as' then
-        if not fields.filename or fields.filename == '' then
-            minetest.chat_send_player(name, 'Save operation cancelled.')
-            snippets.show_console(name)
-            return
-        end
-
-        -- Don't overwrite non-persistent snippets
-        local filename = fields.filename:gsub(':', '/')
-        while snippets.registered_snippets[filename] and
-                not snippets.registered_snippets[filename].persistent do
-            filename = filename .. '_'
-        end
-
-        -- Actually save it
-        snippets.register_snippet(filename, {
-            owner = name,
-            code  = console_code[name],
-            persistent = true,
-        })
-
-        selected_snippet[name] = filename
+    if not fields.filename or fields.filename == '' then
+        minetest.chat_send_player(name, 'Save operation cancelled.')
         snippets.show_console(name)
         return
     end
 
-    if fields.code then console_code[name] = fields.code end
+    -- Don't overwrite non-persistent snippets
+    local filename = fields.filename:gsub(':', '/')
+    while snippets.registered_snippets[filename] and
+            not snippets.registered_snippets[filename].persistent do
+        filename = filename .. '_'
+    end
+
+    -- Actually save it
+    snippets.register_snippet(filename, {
+        owner = name,
+        code  = form.context.code,
+        persistent = true,
+    })
+
+    form.context.selected_snippet = filename
+    snippets.show_console(name)
+end
+
+function callback(form, fields)
+    local name = form.pname
+    if not minetest.check_player_privs(name, 'server') then
+        forms[name] = nil
+        form:close()
+    end
+
+    if fields.code then
+        form.context.code = fields.code
+    end
 
     if fields.ignore then
         return
     elseif fields.run then
         local code = fields.code
-        console_text[name] = {}
+        form.context.text = {}
         snippets.show_console(name)
         if not code or code == '' then return end
         local res = snippets.exec_as_player(name, code)
@@ -202,35 +213,38 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
             snippets.push_console_msg(name, res)
         end
     elseif fields.reset then
-        console_text[name] = nil
-        snippets.show_console(name)
-    elseif fields.snippetlist and snippet_list[name] then
+        form.context.text = nil
+        snippets.update_console(name)
+    elseif fields.snippetlist and form.context.snippet_list then
         local event = minetest.explode_textlist_event(fields.snippetlist)
-        local selected = snippet_list[name][event.index - 1]
-        if selected_snippet[name] == selected then return end
-        selected_snippet[name] = selected
-        if console_text[name] then console_text[name] = nil end
+        local selected = form.context.snippet_list[event.index - 1]
+        if form.context.selected_snippet == selected then return end
+        form.context.selected_snippet = selected
+        form.context.text = nil
         local def = snippets.registered_snippets[selected]
-        console_code[name] = def and def.code or ''
-        snippets.show_console(name)
-    elseif fields.save and selected_snippet[name] then
-        if console_code[name] == '' then
-            snippets.unregister_snippet(selected_snippet[name])
-            selected_snippet[name] = nil
+        form.context.code = def and def.code or ''
+        snippets.update_console(name)
+    elseif fields.save and form.context.selected_snippet then
+        if form.context.code == '' then
+            snippets.unregister_snippet(form.context.selected_snippet)
+            form.context.selected_snippet = nil
         else
-            snippets.register_snippet(selected_snippet[name], {
+            snippets.register_snippet(form.context.selected_snippet, {
                 owner = name,
-                code  = console_code[name],
+                code  = form.context.code,
                 persistent = true,
             })
         end
         snippets.show_console(name)
-    elseif fields.save or fields.save_as and console_code[name] ~= '' then
-        console_text[name] = nil
-        minetest.show_formspec(name, 'snippets:console_save_as',
+    elseif fields.save or fields.save_as and form.context.code ~= '' then
+        form.context.text = nil
+
+        local saveform = snippets.Form(name)
+        saveform:set_formspec(
             'field[filename;Please enter a new snippet name.;]')
+        saveform:add_callback(saveform_callback)
+        saveform:show()
     elseif fields.quit then
-        -- console_code[name] = nil
-        console_text[name] = nil
+        form.text = nil
     end
-end)
+end

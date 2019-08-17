@@ -71,6 +71,11 @@ function Form:close()
 end
 Form.hide = Form.close
 
+-- Check if the form is open
+function Form:is_open()
+    return open_formspecs[get(self).victim] == self
+end
+
 -- Prepends etc
 function Form:get_prepend()  return get(self).prepend  end
 function Form:get_formspec() return get(self).formspec end

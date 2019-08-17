@@ -42,6 +42,7 @@ Form methods:
 
  - `form:show()` / `form:open()`: Displays the form.
  - `form:hide()` / `form:close()`: Closes the form.
+ - `form:is_open()`: Returns `true` if the form is currently open.
  - `form:set_prepend(formspec)`: Sets text to prepend to the formspec. This has
     nothing to do with global formspec prepends.
  - `form:set_formspec(formspec)`: Sets the formspec text. This does not modify
@@ -56,7 +57,8 @@ Form methods:
     however is only called if `fields` contains `name` (a string).
  - `form.context`: Private data stored with this `form` object. Not sent to
     clients.
- - `form.pname`: The player name associated with this form.
+ - `form.pname`: The player name associated with this form. *Changing this will
+    not change the player the form is associated with.*
 
 *When a form is deleted (`form=nil`) and it is not open by the client, garbage
 collection will allow the internal `formname` to be reused.*
