@@ -119,7 +119,7 @@ function snippets.Form(player)
     if type(player) ~= 'string' or not get_player_by_name(player) then
         error('Attempted to create a Form for a non-existent player!', 2)
     end
-    local form = {context = {}}
+    local form = {context = {}, pname = player}
     setmetatable(form, {__index = Form})
     forms[form] = {
         victim = player, prepend = '', formspec = '', append = '',
