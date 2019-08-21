@@ -135,7 +135,7 @@ function snippets.Form(name)
     return form
 end
 
-function snippets.close_form(name, callbacks)
+function snippets.close_form(name)
     if minetest.is_player(name) then name = name:get_player_name() end
     if open_formspecs[name] then open_formspecs[name]:close() end
 end

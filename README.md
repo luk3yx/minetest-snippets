@@ -30,6 +30,8 @@ More documentation coming soon.
  - `snippets.exec(code)`: Executes `code` inside a generic snippet.
  - `snippets.run(name, ...)`: Executes a snippet.
  - `snippets.Form(player_or_name)`: Creates a form.
+ - `snippets.close_form(player_or_name)`: Closes `player_or_name`'s currently
+    open form.
 
 ### Forms
 
