@@ -55,8 +55,9 @@ function Form:show()
     local data = get(self)
     if not get_player_by_name(data.victim) then return false end
     open_formspecs[data.victim] = self
-    show_formspec(data.victim, data.formname,
-        data.prepend .. data.formspec .. data.append)
+    local formspec = data.prepend .. data.formspec .. data.append
+    if formspec == '' then formspec = ' ' end
+    show_formspec(data.victim, data.formname, formspec)
     return true
 end
 Form.open = Form.show
@@ -118,19 +119,25 @@ function Form:add_callback(...)
     table.insert(data.callbacks[event], snippets.wrap_callback(func))
 end
 
--- Create a Formspec object
-function snippets.Form(player)
-    if minetest.is_player(player) then player = player:get_player_name() end
-    if type(player) ~= 'string' or not get_player_by_name(player) then
+-- Create a Form object
+function snippets.Form(name)
+    if minetest.is_player(name) then
+        name = name:get_player_name()
+    elseif type(name) ~= 'string' or not get_player_by_name(name) then
         error('Attempted to create a Form for a non-existent player!', 2)
     end
-    local form = {context = {}, pname = player}
+    local form = {context = {}, pname = name}
     setmetatable(form, {__index = Form})
     forms[form] = {
-        victim = player, prepend = '', formspec = '', append = '',
-        callbacks = {}, formname = get_next_formname(form), pname = player,
+        victim = name, prepend = '', formspec = '', append = '',
+        callbacks = {}, formname = get_next_formname(form),
     }
     return form
+end
+
+function snippets.close_form(name, callbacks)
+    if minetest.is_player(name) then name = name:get_player_name() end
+    if open_formspecs[name] then open_formspecs[name]:close() end
 end
 
 -- Callbacks
