@@ -154,7 +154,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if not data or data.formname ~= formname then return end
 
     -- Nuke the formspec if required
-    if fields.quit then open_formspecs[pname] = nil end
+    if fields.quit then form:close() end
 
     -- Run generic callbacks
     run_callbacks(data.callbacks[''], form, fields)
