@@ -112,10 +112,17 @@ function snippets.push_console_msg(name, msg, col)
     end
 
     local text = forms[name] and forms[name].context.text
-    if text then
-        table.insert(text, col .. tostring(msg))
-        snippets.update_console(name)
+    if not text then return end
+
+    msg = tostring(msg)
+    for _, line in ipairs(msg:split('\n', true)) do
+        text[#text + 1] = col .. line
+        if #text > 501 then
+            text[1] = '#aaaaaaSnippets only stores 500 lines of scrollback.'
+            table.remove(text, 2)
+        end
     end
+    snippets.update_console(name)
 end
 
 snippets.register_on_log(function(snippet, level, msg)
