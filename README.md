@@ -2,8 +2,6 @@
 
 A way for admins to run and save lua snippets.
 
-More documentation coming soon.
-
 ## API
 
  - `snippets.register_snippet(name, <code or def>)`: Registers a snippet.
