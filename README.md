@@ -2,6 +2,10 @@
 
 A way for admins to run and save lua snippets.
 
+## Chatcommands
+
+ - `/snippets`: Open the snippets console.
+
 ## API
 
  - `snippets.register_snippet(name, <code or def>)`: Registers a snippet.
