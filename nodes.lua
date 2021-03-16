@@ -6,7 +6,7 @@ minetest.register_node('snippets:button', {
     description = 'Snippets button',
     tiles = {'default_steel_block.png', 'default_steel_block.png',
         'default_steel_block.png^snippets_button.png'},
-    groups = {cracky = 2},
+    groups = {cracky = 2, not_in_creative_inventory = 1},
 
     on_construct = function(pos)
         local meta = minetest.get_meta(pos)

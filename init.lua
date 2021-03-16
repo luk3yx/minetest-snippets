@@ -20,4 +20,7 @@ dofile(modpath .. '/forms.lua')
 dofile(modpath .. '/console.lua')
 
 -- Load "snippet buttons"
-dofile(modpath .. '/nodes.lua')
+local enable_buttons = minetest.settings:get_bool('snippets.enable_buttons')
+if enable_buttons or enable_buttons == nil then
+    dofile(modpath .. '/nodes.lua')
+end

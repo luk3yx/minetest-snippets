@@ -4,7 +4,21 @@ A way for admins to run and save lua snippets.
 
 ## Chatcommands
 
- - `/snippets`: Open the snippets console.
+ - `/snippets`: Open the snippets console. This allows you to edit and run Lua
+   snippets.
+
+## Nodes
+
+This mod registers a snippets button node that runs a snippet when pressed. The
+snippet will be called with the player name as its first argument. For example,
+you can do `local name = ...` inside a snippet to get the name of the player
+that pressed the button.
+
+Buttons don't appear in the creative inventory, if you want them to you will
+need to run `/giveme snippets:button`.
+
+If you don't want the buttons at all, you can add
+`snippets.enable_buttons = false` to your minetest.conf.
 
 ## API
 
