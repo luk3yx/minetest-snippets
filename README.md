@@ -56,6 +56,9 @@ snippets over `minetest.show_formspec`, as they do not create semi-permanent
 global handlers. There is currently no way to set the `formname`, it is
 automatically chosen/generated and is used internally.
 
+Consider using [flow](https://content.minetest.net/packages/luk3yx/flow/)
+instead for new forms.
+
 Form methods:
 
  - `form:show()` / `form:open()`: Displays the form.
