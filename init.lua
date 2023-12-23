@@ -24,3 +24,11 @@ local enable_buttons = minetest.settings:get_bool('snippets.enable_buttons')
 if enable_buttons or enable_buttons == nil then
     dofile(modpath .. '/nodes.lua')
 end
+
+minetest.register_on_mods_loaded(function()
+    for name, def in pairs(snippets.registered_snippets) do
+        if def.autorun then
+            snippets.run(name)
+        end
+    end
+end)
