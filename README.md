@@ -26,6 +26,7 @@ If you don't want the buttons at all, you can add
     `def` can be a table containing `code` (or `func`), and optionally `owner`.
     If `persistent` is specified, this snippet will remain registered across
     reboots.
+    If `autorun` is specified, this snippet will auto run on server start. (Snippet must be persistent to support autorun)
  - `snippets.unregister_snippet(name)`: The opposite of
     `snippets.register_snippet`.
  - `snippets.registered_snippets`: A table containing the above snippets.

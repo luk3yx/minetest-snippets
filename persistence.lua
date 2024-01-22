@@ -38,6 +38,7 @@ function snippets.register_snippet(name, def)
         storage:set_string('>' .. name, minetest.serialize({
             code = def.code,
             owner = def.owner,
+            autorun = def.autorun
         }))
     end
 

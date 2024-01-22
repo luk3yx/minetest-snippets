@@ -36,10 +36,10 @@ function snippets.update_console(name)
     local selected, unaved = 0, false
     local selected_snippet = form.context.selected_snippet
     for id, snippet in ipairs(snippet_list) do
-        formspec = formspec .. ',##' .. minetest.formspec_escape(snippet)
+        local def = snippets.registered_snippets[snippet]
+        formspec = formspec .. ',' .. (def.autorun and "#ff7777\\[A\\] " or "##") .. minetest.formspec_escape(snippet)
         if snippet == selected_snippet then
             selected = id
-            local def = snippets.registered_snippets[snippet]
             if (def and def.code or '') ~= form.context.code then
                 formspec = formspec .. ' (unsaved)'
             end
@@ -65,11 +65,11 @@ function snippets.update_console(name)
             formspec = formspec .. ';1'
         end
         formspec = formspec ..
-            ']button[3.9,5.14;10.21,0.81;reset;Reset]' ..
+            ']button[3.9,5.14;'..(selected_snippet and '8.8' or '10.21')..',0.81;reset;Reset]' ..
             'box[3.9,0.4;10,4.5;#ffffff]'
     else
         formspec = formspec .. ';1]' ..
-            'button[3.9,5.14;10.21,0.81;run;Run]'
+            'button[3.9,5.14;'..(selected_snippet and '8.8' or '10.21')..',0.81;run;Run]'
     end
 
     if not form.context.code then form.context.code = '' end
@@ -96,6 +96,9 @@ function snippets.update_console(name)
         (form.context.text and '' or 'code') .. ';Snippet: ' ..
         minetest.formspec_escape(snippet .. ', owner: ' .. owner) .. ';' ..
         code .. ']'
+    if selected_snippet then
+       formspec = formspec .. 'checkbox[12.7,5.05;autorun;Autorun;'..tostring(def and (def.autorun or false))..']'
+    end
 
     form:set_formspec(formspec)
 end
@@ -240,6 +243,7 @@ function callback(form, fields)
                 owner = name,
                 code  = form.context.code,
                 persistent = true,
+                autorun = form.context.autorun
             })
         end
         snippets.show_console(name)
@@ -251,6 +255,8 @@ function callback(form, fields)
             'field[filename;Please enter a new snippet name.;]')
         saveform:add_callback(saveform_callback)
         saveform:show()
+    elseif fields.autorun and form.context.selected_snippet then
+        form.context.autorun = fields.autorun == "true"
     elseif fields.quit then
         form.text = nil
     end
