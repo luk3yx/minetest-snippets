@@ -97,7 +97,13 @@ function snippets.update_console(name)
         minetest.formspec_escape(snippet .. ', owner: ' .. owner) .. ';' ..
         code .. ']'
     if selected_snippet then
-       formspec = formspec .. 'checkbox[12.7,5.05;autorun;Autorun;'..tostring(def and (def.autorun or false))..']'
+        local autorun
+        if form.context.autorun == nil then
+            autorun = def and def.autorun or false
+        else
+            autorun = form.context.autorun
+        end
+        formspec = formspec .. 'checkbox[12.7,5.05;autorun;Autorun;' .. tostring(autorun) .. ']'
     end
 
     form:set_formspec(formspec)
@@ -194,6 +200,7 @@ local function saveform_callback(saveform, fields)
         owner = name,
         code  = form.context.code,
         persistent = true,
+        autorun = form.context.autorun
     })
 
     form.context.selected_snippet = filename
@@ -231,6 +238,7 @@ function callback(form, fields)
         if form.context.selected_snippet == selected then return end
         form.context.selected_snippet = selected
         form.context.text = nil
+        form.context.autorun = nil
         local def = snippets.registered_snippets[selected]
         form.context.code = def and def.code or ''
         snippets.update_console(name)
@@ -256,7 +264,7 @@ function callback(form, fields)
         saveform:add_callback(saveform_callback)
         saveform:show()
     elseif fields.autorun and form.context.selected_snippet then
-        form.context.autorun = fields.autorun == "true"
+        form.context.autorun = minetest.is_yes(fields.autorun)
     elseif fields.quit then
         form.text = nil
     end
