@@ -3,12 +3,9 @@
 --
 
 -- Use steel block texture in minetest_game
-local bg
-if minetest.registered_nodes['default:steelblock'] then
-    bg = 'default_steel_block.png'
-else
-    bg = '[combine:1x1^[noalpha^[colorize:#aaa'
-end
+local bg = minetest.global_exists('xcompat') and xcompat.textures and
+    xcompat.textures.metal.steel.block or
+    '[combine:1x1^[noalpha^[colorize:#aaa'
 
 minetest.register_node('snippets:button', {
     description = 'Snippets button',
